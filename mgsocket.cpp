@@ -38,15 +38,35 @@ void MGSocket::sslError(QList<QSslError> list)
 
 void MGSocket::socketError(QAbstractSocket::SocketError err)
 {
-    qDebug()<<"Socket Error:"<<err;
+    Q_UNUSED(err);
+    Q_CHECK_PTR(m_socket);
+    qDebug()<<"Socket Error:"<<m_socket->errorString();
 }
 
 void MGSocket::encrypted()
 {
     qDebug()<<"Connection encrypted";
+    cmdRegistration_s data;
+    data.type = m_type;
+    this->send<cmdRegistration_s>(cmdRegistration, data);
 }
 
 MGSocket::~MGSocket()
 {
     delete m_socket;
+}
+
+template <class cmdType> void MGSocket::send(quint8 cmd, const cmdType &data)
+{
+    Q_CHECK_PTR(m_socket);
+    QByteArray buffer;
+    QDataStream out(&buffer, QIODevice::WriteOnly);
+
+    switch(cmd)
+    {
+    case cmdRegistration:
+        out<<data;
+        break;
+    }
+    m_socket->write(buffer);
 }

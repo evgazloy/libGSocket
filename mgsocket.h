@@ -29,6 +29,8 @@ private:
     QSslSocket *m_socket = 0;
     quint8 m_type;
 
+    template <class cmdType> void send(quint8 cmd, const cmdType &data);
+
 signals:
     void sig_ready();
     void sig_socketError(QAbstractSocket::SocketError error);
