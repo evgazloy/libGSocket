@@ -15,6 +15,7 @@ void MGSocket::initSocket()
     connect(m_socket, SIGNAL(encrypted()), SLOT(encrypted()));
     connect(m_socket, &QSslSocket::encrypted, this, &MGSocket::sig_ready);
     connect(m_socket, SIGNAL(error(QAbstractSocket::SocketError)), SIGNAL(sig_socketError(QAbstractSocket::SocketError)));
+    connect(m_socket, &QSslSocket::readyRead, this, &MGSocket::inData);
 }
 
 void MGSocket::setCertificate(QString file)
@@ -27,6 +28,12 @@ void MGSocket::createConnection(QString hostName, quint16 port)
 {
     Q_CHECK_PTR(m_socket);
     m_socket->connectToHostEncrypted(hostName, port);
+}
+
+void MGSocket::inData()
+{
+    Q_CHECK_PTR(m_socket);
+    qDebug()<<"rcv"<<m_socket->bytesAvailable();
 }
 
 void MGSocket::sslError(QList<QSslError> list)
@@ -46,27 +53,18 @@ void MGSocket::socketError(QAbstractSocket::SocketError err)
 void MGSocket::encrypted()
 {
     qDebug()<<"Connection encrypted";
-    cmdRegistration_s data;
-    data.type = m_type;
-    this->send<cmdRegistration_s>(cmdRegistration, data);
+}
+
+void MGSocket::send(const QByteArray &data)
+{
+    Q_CHECK_PTR(m_socket);
+    QByteArray buf;
+    buf.append(sizeof(data));
+    buf.append(data);
+    m_socket->write(buf);
 }
 
 MGSocket::~MGSocket()
 {
     delete m_socket;
-}
-
-template <class cmdType> void MGSocket::send(quint8 cmd, const cmdType &data)
-{
-    Q_CHECK_PTR(m_socket);
-    QByteArray buffer;
-    QDataStream out(&buffer, QIODevice::WriteOnly);
-
-    switch(cmd)
-    {
-    case cmdRegistration:
-        out<<data;
-        break;
-    }
-    m_socket->write(buffer);
 }

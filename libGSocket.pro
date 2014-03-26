@@ -17,9 +17,7 @@ DEFINES += LIBGSOCKET_LIBRARY
 
 SOURCES += mgsocket.cpp
 
-HEADERS += mgsocket.h \
-    tcpcommands.h \
-    mprotocol.h
+HEADERS += mgsocket.h
 
 unix {
     target.path = /usr/lib

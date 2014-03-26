@@ -5,8 +5,6 @@
 #include <QObject>
 #include <QSslSocket>
 #include <QSslError>
-#include "mprotocol.h"
-#include "tcpcommands.h"
 
 #if defined(LIBGSOCKET_LIBRARY)
 #  define LIBGSOCKETSHARED_EXPORT Q_DECL_EXPORT
@@ -24,12 +22,13 @@ public:
     void initSocket();
     void setCertificate(QString file);
     void createConnection(QString hostName, quint16 port);
+    void send(const QByteArray &data);
 
 private:
     QSslSocket *m_socket = 0;
     quint8 m_type;
 
-    template <class cmdType> void send(quint8 cmd, const cmdType &data);
+    void inData();
 
 signals:
     void sig_ready();
