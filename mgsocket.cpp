@@ -27,6 +27,8 @@ void MGSocket::setCertificate(QString file)
 void MGSocket::createConnection(QString hostName, quint16 port)
 {
     Q_CHECK_PTR(m_socket);
+    m_hostName = hostName;
+    m_port = port;
     m_socket->connectToHostEncrypted(hostName, port);
 }
 
@@ -34,6 +36,15 @@ void MGSocket::inData()
 {
     Q_CHECK_PTR(m_socket);
     qDebug()<<"rcv"<<m_socket->bytesAvailable();
+}
+
+void MGSocket::timerEvent(QTimerEvent *ev)
+{
+    Q_CHECK_PTR(m_socket);
+    if(m_socket->state()==QAbstractSocket::UnconnectedState)
+        m_socket->connectToHostEncrypted(m_hostName, m_port);
+    else
+        this->killTimer(ev->timerId());
 }
 
 void MGSocket::sslError(QList<QSslError> list)
@@ -48,6 +59,7 @@ void MGSocket::socketError(QAbstractSocket::SocketError err)
     Q_UNUSED(err);
     Q_CHECK_PTR(m_socket);
     qDebug()<<"Socket Error:"<<m_socket->errorString();
+    this->startTimer(SOCKET_TIMEOUT);
 }
 
 void MGSocket::encrypted()
@@ -59,9 +71,15 @@ void MGSocket::send(const QByteArray &data)
 {
     Q_CHECK_PTR(m_socket);
     QByteArray buf;
-    buf.append(sizeof(data));
-    buf.append(data);
+    QDataStream out(&buf, QIODevice::ReadWrite);
+    out<<data;
     m_socket->write(buf);
+}
+
+QAbstractSocket::SocketState MGSocket::getState()
+{
+    Q_CHECK_PTR(m_socket);
+    return m_socket->state();
 }
 
 MGSocket::~MGSocket()

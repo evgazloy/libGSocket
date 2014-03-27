@@ -5,12 +5,15 @@
 #include <QObject>
 #include <QSslSocket>
 #include <QSslError>
+#include <QTimerEvent>
 
 #if defined(LIBGSOCKET_LIBRARY)
 #  define LIBGSOCKETSHARED_EXPORT Q_DECL_EXPORT
 #else
 #  define LIBGSOCKETSHARED_EXPORT Q_DECL_IMPORT
 #endif
+
+#define SOCKET_TIMEOUT 2000
 
 class LIBGSOCKETSHARED_EXPORT MGSocket : public QObject
 {
@@ -23,12 +26,16 @@ public:
     void setCertificate(QString file);
     void createConnection(QString hostName, quint16 port);
     void send(const QByteArray &data);
+    QAbstractSocket::SocketState getState();
 
 private:
     QSslSocket *m_socket = 0;
     quint8 m_type;
+    QString m_hostName;
+    quint16 m_port;
 
     void inData();
+    void timerEvent(QTimerEvent *ev);
 
 signals:
     void sig_ready();
