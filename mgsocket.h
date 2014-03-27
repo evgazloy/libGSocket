@@ -33,6 +33,8 @@ private:
     quint8 m_type;
     QString m_hostName;
     quint16 m_port;
+    quint32 m_dataSize = 0;
+    QByteArray m_inBuffer;
 
     void inData();
     void timerEvent(QTimerEvent *ev);
@@ -40,6 +42,7 @@ private:
 signals:
     void sig_ready();
     void sig_socketError(QAbstractSocket::SocketError error);
+    void sig_inCmd(QByteArray data);
 
 public slots:
     void sslError(QList<QSslError> list);

@@ -35,7 +35,31 @@ void MGSocket::createConnection(QString hostName, quint16 port)
 void MGSocket::inData()
 {
     Q_CHECK_PTR(m_socket);
-    qDebug()<<"rcv"<<m_socket->bytesAvailable();
+    QDataStream in(m_socket);
+    while(m_socket->bytesAvailable())
+    {
+        if(!m_dataSize)
+        {
+            if(m_socket->bytesAvailable() < (qint64)sizeof(m_dataSize))
+                 continue;
+            in>>m_dataSize;
+            m_inBuffer.clear();
+        }
+        qint64 byteToRead = qMin<qint64>(m_socket->bytesAvailable(), m_dataSize);
+
+        QByteArray buffer;
+        buffer.resize(byteToRead);
+        if(in.readRawData(buffer.data(), byteToRead)!=byteToRead)
+        {
+            qCritical()<<"Can't read all bytes.";
+            m_socket->disconnectFromHost();
+            return;
+        }
+        m_inBuffer.append(buffer);
+        m_dataSize -= byteToRead;
+        if(!m_dataSize)
+            emit sig_inCmd(m_inBuffer);
+    }
 }
 
 void MGSocket::timerEvent(QTimerEvent *ev)
